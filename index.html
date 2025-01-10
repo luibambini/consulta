@@ -104,7 +104,7 @@
       try {
         const dadosProdutos = await fetchCSV(SHEET_CSV_URL);
 
-        // Buscar o produto pelo SKU ou Código de Barras
+        // Buscar o produto pelo SKU (Coluna A) ou Código de Barras (Coluna B)
         const produto = dadosProdutos.find(p => p.sku === codigoProduto || p.codigoBarras === codigoProduto);
 
         if (produto) {
@@ -137,8 +137,8 @@
           header: true,
           complete: (results) => {
             resolve(results.data.map(item => ({
-              sku: item['SKU'], // Coluna para SKU
-              codigoBarras: item['Código de Barras'], // Coluna para Código de Barras
+              sku: item['SKU'], // Coluna para SKU (Coluna A)
+              codigoBarras: item['Código de Barras'], // Coluna para Código de Barras (Coluna B)
               valorOriginal: item['Valor Original'],
               valorComDesconto: item['Valor com Desconto'],
               tamanho: item['Tamanho'],
