@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Consulta com Código de Barras</title>
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
-  <script src="https://unpkg.com/quagga@0.12.1/dist/quagga.min.js"></script>
+  <script src="https://unpkg.com/@zxing/library@0.18.6/umd/index.min.js"></script>
   <style>
     body {
       font-family: 'Roboto', Arial, sans-serif;
@@ -67,6 +67,7 @@
       height: auto;
       margin-top: 20px;
       border-radius: 12px;
+      display: none;
     }
 
     .resultado {
@@ -91,7 +92,6 @@
     <input type="text" id="codigoProduto" placeholder="Digite ou escaneie o código do produto">
     <button onclick="consultarProduto()">Consultar</button>
     <button onclick="iniciarScanner()">Ler Código de Barras</button>
-
     <video id="video" autoplay playsinline></video>
     
     <div id="resultado" class="resultado">
@@ -163,39 +163,21 @@
     }
 
     function iniciarScanner() {
-      const video = document.getElementById('video');
+      const videoElement = document.getElementById('video');
+      videoElement.style.display = 'block';
 
-      Quagga.init(
-        {
-          inputStream: {
-            name: "Live",
-            type: "LiveStream",
-            target: video,
-            constraints: {
-              facingMode: "environment"
-            }
-          },
-          decoder: {
-            readers: ["ean_reader", "code_128_reader"]
-          },
-          locate: true
-        },
-        (err) => {
-          if (err) {
-            console.error("Erro ao inicializar o Quagga:", err);
-            alert("Erro ao acessar a câmera. Verifique as permissões.");
-            return;
-          }
-          Quagga.start();
-        }
-      );
-
-      Quagga.onDetected((result) => {
-        const code = result.codeResult.code;
-        document.getElementById('codigoProduto').value = code;
-        Quagga.stop();
-        alert("Código lido: " + code);
-      });
+      const codeReader = new ZXing.BrowserBarcodeReader();
+      codeReader.decodeFromVideoDevice(undefined, videoElement)
+        .then(result => {
+          document.getElementById('codigoProduto').value = result.text;
+          alert("Código lido: " + result.text);
+          codeReader.reset();
+          videoElement.style.display = 'none';
+        })
+        .catch(err => {
+          console.error(err);
+          alert("Erro ao iniciar o scanner. Verifique as permissões da câmera.");
+        });
     }
   </script>
 </body>
