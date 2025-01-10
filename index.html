@@ -107,6 +107,7 @@
 
   <script>
     const SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRJbY4qdDGbwGkmUEr9spCnr7RF6z3mduJlIDe6xvQ4dJFCq4OfjWXmEXRB-esA2Sn5aN1B6hi74RAY/pub?gid=0&single=true&output=csv';
+    let codeReader = null; // Controla o fluxo do scanner
 
     async function consultarProduto() {
       const codigoProduto = document.getElementById('codigoProduto').value.trim();
@@ -166,18 +167,27 @@
       const videoElement = document.getElementById('video');
       videoElement.style.display = 'block';
 
-      const codeReader = new ZXing.BrowserBarcodeReader();
+      if (!codeReader) {
+        codeReader = new ZXing.BrowserBarcodeReader();
+      }
+
       codeReader.decodeFromVideoDevice(undefined, videoElement)
         .then(result => {
           document.getElementById('codigoProduto').value = result.text;
           alert("Código lido: " + result.text);
-          codeReader.reset();
-          videoElement.style.display = 'none';
+          pararScanner();
         })
         .catch(err => {
           console.error(err);
           alert("Erro ao iniciar o scanner. Verifique as permissões da câmera.");
         });
+    }
+
+    function pararScanner() {
+      if (codeReader) {
+        codeReader.reset();
+        document.getElementById('video').style.display = 'none';
+      }
     }
   </script>
 </body>
