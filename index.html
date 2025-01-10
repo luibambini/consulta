@@ -164,21 +164,26 @@
 
     function iniciarScanner() {
       const video = document.getElementById('video');
+
       Quagga.init(
         {
           inputStream: {
             name: "Live",
             type: "LiveStream",
-            target: video
+            target: video,
+            constraints: {
+              facingMode: "environment"
+            }
           },
           decoder: {
-            readers: ["code_128_reader", "ean_reader"]
-          }
+            readers: ["ean_reader", "code_128_reader"]
+          },
+          locate: true
         },
         (err) => {
           if (err) {
-            console.error(err);
-            alert("Erro ao iniciar o scanner.");
+            console.error("Erro ao inicializar o Quagga:", err);
+            alert("Erro ao acessar a câmera. Verifique as permissões.");
             return;
           }
           Quagga.start();
@@ -186,9 +191,10 @@
       );
 
       Quagga.onDetected((result) => {
-        document.getElementById('codigoProduto').value = result.codeResult.code;
+        const code = result.codeResult.code;
+        document.getElementById('codigoProduto').value = code;
         Quagga.stop();
-        alert("Código lido: " + result.codeResult.code);
+        alert("Código lido: " + code);
       });
     }
   </script>
