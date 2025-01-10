@@ -3,9 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Consulta com Código de Barras</title>
+  <title>Consulta com Código de Barras e SKU</title>
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
-  <script src="https://unpkg.com/@zxing/library@0.18.6/umd/index.min.js"></script>
   <style>
     body {
       font-family: 'Roboto', Arial, sans-serif;
@@ -62,14 +61,6 @@
       background-color: #45a049;
     }
 
-    #video {
-      width: 100%;
-      height: auto;
-      margin-top: 20px;
-      border-radius: 12px;
-      display: none;
-    }
-
     .resultado {
       margin-top: 20px;
       text-align: left;
@@ -88,12 +79,10 @@
 </head>
 <body>
   <div class="container">
-    <h2>Consulta com Código de Barras</h2>
-    <input type="text" id="codigoProduto" placeholder="Digite ou escaneie o código do produto">
+    <h2>Consulta com Código de Barras e SKU</h2>
+    <input type="text" id="codigoProduto" placeholder="Digite o SKU ou Código de Barras">
     <button onclick="consultarProduto()">Consultar</button>
-    <button onclick="iniciarScanner()">Ler Código de Barras</button>
-    <video id="video" autoplay playsinline></video>
-    
+
     <div id="resultado" class="resultado">
       <p><strong>Título:</strong> <span id="titulo"></span></p>
       <p><strong>Valor Original:</strong> <span id="valorOriginal"></span></p>
@@ -107,7 +96,6 @@
 
   <script>
     const SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRJbY4qdDGbwGkmUEr9spCnr7RF6z3mduJlIDe6xvQ4dJFCq4OfjWXmEXRB-esA2Sn5aN1B6hi74RAY/pub?gid=0&single=true&output=csv';
-    let codeReader = null; // Controla o fluxo do scanner
 
     async function consultarProduto() {
       const codigoProduto = document.getElementById('codigoProduto').value.trim();
@@ -115,7 +103,9 @@
 
       try {
         const dadosProdutos = await fetchCSV(SHEET_CSV_URL);
-        const produto = dadosProdutos.find(p => p.codigo === codigoProduto);
+
+        // Buscar o produto pelo SKU ou Código de Barras
+        const produto = dadosProdutos.find(p => p.sku === codigoProduto || p.codigoBarras === codigoProduto);
 
         if (produto) {
           const valorOriginal = parseFloat(produto.valorOriginal.replace(',', '.'));
@@ -147,13 +137,14 @@
           header: true,
           complete: (results) => {
             resolve(results.data.map(item => ({
-              codigo: item[Object.keys(item)[0]],
-              valorOriginal: item[Object.keys(item)[1]],
-              valorComDesconto: item[Object.keys(item)[2]],
-              tamanho: item[Object.keys(item)[3]],
-              cor: item[Object.keys(item)[4]],
-              quantidade: item[Object.keys(item)[5]],
-              titulo: item[Object.keys(item)[6]]
+              sku: item['SKU'], // Coluna para SKU
+              codigoBarras: item['Código de Barras'], // Coluna para Código de Barras
+              valorOriginal: item['Valor Original'],
+              valorComDesconto: item['Valor com Desconto'],
+              tamanho: item['Tamanho'],
+              cor: item['Cor'],
+              quantidade: item['Quantidade'],
+              titulo: item['Título']
             })));
           },
           error: (error) => {
@@ -161,33 +152,6 @@
           }
         });
       });
-    }
-
-    function iniciarScanner() {
-      const videoElement = document.getElementById('video');
-      videoElement.style.display = 'block';
-
-      if (!codeReader) {
-        codeReader = new ZXing.BrowserBarcodeReader();
-      }
-
-      codeReader.decodeFromVideoDevice(undefined, videoElement)
-        .then(result => {
-          document.getElementById('codigoProduto').value = result.text;
-          alert("Código lido: " + result.text);
-          pararScanner();
-        })
-        .catch(err => {
-          console.error(err);
-          alert("Erro ao iniciar o scanner. Verifique as permissões da câmera.");
-        });
-    }
-
-    function pararScanner() {
-      if (codeReader) {
-        codeReader.reset();
-        document.getElementById('video').style.display = 'none';
-      }
     }
   </script>
 </body>
